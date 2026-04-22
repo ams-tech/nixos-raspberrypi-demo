@@ -331,6 +331,28 @@
         ];
       };
 
+      rpi5-installer = nixos-raspberrypi.lib.nixosInstaller {
+        specialArgs = inputs;
+        modules = [
+          ({ nixos-raspberrypi, ... }: {
+            imports = with nixos-raspberrypi.nixosModules; [
+              raspberry-pi-5.base
+              raspberry-pi-5.page-size-16k
+              raspberry-pi-5.display-vc4
+              ./pi5-configtxt.nix
+            ];
+          })
+          common-user-config
+          {
+            boot.loader.raspberry-pi.bootloader = "kernel";
+          }
+        ];
+      };
+
+    };
+
+    installerImages = {
+      rpi5 = self.nixosConfigurations.rpi5-installer.config.system.build.sdImage;
     };
 
   };
