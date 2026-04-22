@@ -19,7 +19,7 @@
 
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
     nixos-raspberrypi = {
-      url = "github:nvmd/nixos-raspberrypi/main";
+      url = "github:ams-tech/nixos-raspberrypi/topic/rpi-otp-private-key";
     };
 
     disko = {
@@ -298,6 +298,33 @@
           # Further user configuration
           common-user-config
           {
+            boot.loader.raspberry-pi.bootloader = "kernel";
+            boot.tmp.useTmpfs = true;
+          }
+        ];
+      };
+      rpi5-encrypted-disk = nixos-raspberrypi.lib.nixosSystemFull {
+        specialArgs = inputs;
+        modules = [
+          ({ config, pkgs, lib, nixos-raspberrypi, disko, ... }: {
+            imports = with nixos-raspberrypi.nixosModules; [
+              # Hardware configuration
+              raspberry-pi-5.base
+              raspberry-pi-5.page-size-16k
+              raspberry-pi-5.display-vc4
+              ./pi5-configtxt.nix
+            ];
+          })
+          # Disk configuration
+          disko.nixosModules.disko
+          nixos-raspberrypi.nixosModules.rpi-otp-derived-key
+          # WARNING: formatting disk with disko is DESTRUCTIVE, check if
+          # `disko.devices.disk.nvme0.device` is set correctly!
+          ./disko-nvme-luks-lvm.nix
+          # Further user configuration
+          common-user-config
+          {
+            boot.initrd.systemd.enable = true;
             boot.loader.raspberry-pi.bootloader = "kernel";
             boot.tmp.useTmpfs = true;
           }
