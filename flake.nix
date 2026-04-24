@@ -327,17 +327,18 @@
           {
             boot.loader.raspberry-pi.bootloader = "kernel";
             boot.tmp.useTmpfs = true;
-          }
-
-          services.rpiOtpDerivedKey = {
-            enable = true;
-            secrets.luks = {
-              format = "hex";
-              path = "/run/secrets/luks.key";
-              neededForBoot = true;
-              before = [ "cryptsetup.target" ];
+             # Create a secret derived from the "rpi-otp-private-key" that we will use to decrypt the root filesystem.
+            boot.initrd.systemd.enable = true;
+            services.rpiOtpDerivedKey = {
+              enable = true;
+              secrets.luks = {
+                format = "hex";
+                path = "/run/secrets/luks.key";
+                neededForBoot = true;
+                before = [ "cryptsetup.target" ];
+              };
             };
-          };
+          }
         ];
       };
 
