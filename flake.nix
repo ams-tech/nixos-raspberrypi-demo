@@ -329,6 +329,7 @@
               luksSecretName = "luks";
               luksInitrdSaltPath = "/run/rpi-otp-derived-key/salt/${luksSecretName}";
               luksPersistentSaltPath = config.boot.initrd.secrets.${luksInitrdSaltPath};
+              luksDevice = config.boot.initrd.luks.devices.crypted.device;
               ensureLuksKey = config.system.build.rpiOtpDerivedKeyEnsureScripts.${luksSecretName};
               # Keep the install-time salt with the installed root so future
               # bootloader installs embed the same salt into the initrd.
@@ -341,9 +342,32 @@
                 fi
                 ${pkgs.coreutils}/bin/install -m 0400 ${lib.escapeShellArg luksPersistentSaltPath} "$target_salt"
               '';
+              validateLuksSaltForBoot = pkgs.writeShellScript "rpi-otp-derived-key-validate-luks-salt" ''
+                set -euo pipefail
+
+                salt_path=${lib.escapeShellArg luksPersistentSaltPath}
+                luks_device=${lib.escapeShellArg luksDevice}
+
+                if [ ! -r "$salt_path" ]; then
+                  echo "Refusing to install Raspberry Pi boot files: missing LUKS salt at $salt_path" >&2
+                  echo "Run disko mount mode so the install-time salt is copied into the target root." >&2
+                  exit 1
+                fi
+
+                tmp_key="$(${pkgs.coreutils}/bin/mktemp /run/rpi-otp-derived-key-luks-key.XXXXXX)"
+                trap '${pkgs.coreutils}/bin/rm -f "$tmp_key"' EXIT
+
+                ${lib.getExe pkgs.rpi-otp-derived-key} --format hex --salt-file "$salt_path" > "$tmp_key"
+
+                if ! ${pkgs.cryptsetup}/bin/cryptsetup open --test-passphrase --key-file "$tmp_key" "$luks_device"; then
+                  echo "Refusing to install Raspberry Pi boot files: salt at $salt_path does not unlock $luks_device" >&2
+                  exit 1
+                fi
+              '';
             in
             {
               boot.loader.raspberry-pi.bootloader = "kernel";
+              boot.loader.raspberry-pi.preInstallHooks = [ validateLuksSaltForBoot ];
               boot.tmp.useTmpfs = true;
               # Create a secret derived from the "rpi-otp-private-key" that we will use to decrypt the root filesystem.
               boot.initrd.systemd.enable = true;
