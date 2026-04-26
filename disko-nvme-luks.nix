@@ -37,6 +37,7 @@
               size = "2G";
               content = {
                 type = "swap";
+                randomEncryption.enable = true;
               };
             };
             luks = {
