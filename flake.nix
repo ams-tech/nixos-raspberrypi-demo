@@ -320,7 +320,7 @@
           # Disk configuration
           disko.nixosModules.disko
           # WARNING: formatting disk with disko is DESTRUCTIVE, check if
-          # `disko.devices.disk.nvme0.device` is set correctly!
+          # `disko.devices.disk.nvme0-luks.device` is set correctly!
           ./disko-nvme-luks.nix
           # Further user configuration
           common-user-config
@@ -357,7 +357,7 @@
                 };
               };
 
-              disko.devices.disk.main.content.partitions.luks.content = {
+              disko.devices.disk.nvme0-luks.content.partitions.luks.content = {
                 preCreateHook = "${ensureLuksKey}";
                 preMountHook = "${ensureLuksKey}";
               };
