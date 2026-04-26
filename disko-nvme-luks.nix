@@ -5,7 +5,7 @@
   ];
   disko.devices = {
     disk = {
-      main = {
+      nvme0-luks = {
         type = "disk";
         device = "/dev/nvme0n1";
         content = {
@@ -33,26 +33,10 @@
                 ];
               };
             };
-            ESP = {
-              # label = "ESP";
-
-              type = "EF00";  # EFI System Partition (ESP)
-              attributes = [
-                2 # Legacy BIOS Bootable, for U-Boot to find extlinux config
-              ];
-
-              size = "1024M";
+            swap = {
+              size = "2G";
               content = {
-                type = "filesystem";
-                format = "vfat";
-                mountpoint = "/boot";
-                mountOptions = [
-                  "noatime"
-                  "noauto"
-                  "x-systemd.automount"
-                  "x-systemd.idle-timeout=1min"
-                  "umask=0077"
-                ];
+                type = "swap";
               };
             };
             luks = {
@@ -80,19 +64,11 @@
         type = "lvm_vg";
         lvs = {
           rootfs = {
-            size = "80G";
-            content = {
-              type = "filesystem";
-              format = "ext4";
-              mountpoint = "/";
-            };
-          };
-          home = {
             size = "100%";
             content = {
               type = "filesystem";
               format = "ext4";
-              mountpoint = "/home";
+              mountpoint = "/";
             };
           };
         };
