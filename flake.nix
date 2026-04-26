@@ -324,21 +324,45 @@
           ./disko-nvme-luks.nix
           # Further user configuration
           common-user-config
-          {
-            boot.loader.raspberry-pi.bootloader = "kernel";
-            boot.tmp.useTmpfs = true;
-             # Create a secret derived from the "rpi-otp-private-key" that we will use to decrypt the root filesystem.
-            boot.initrd.systemd.enable = true;
-            services.rpiOtpDerivedKey = {
-              enable = true;
-              secrets.luks = {
-                format = "hex";
-                path = "/run/secrets/luks.key";
-                neededForBoot = true;
-                before = [ "cryptsetup.target" ];
+          ({ config, pkgs, lib, ... }:
+            let
+              luksSecretName = "luks";
+              luksInitrdSaltPath = "/run/rpi-otp-derived-key/salt/${luksSecretName}";
+              luksPersistentSaltPath = config.boot.initrd.secrets.${luksInitrdSaltPath};
+              ensureLuksKey = config.system.build.rpiOtpDerivedKeyEnsureScripts.${luksSecretName};
+              # Keep the install-time salt with the installed root so future
+              # bootloader installs embed the same salt into the initrd.
+              copyLuksSaltToTarget = ''
+                target_salt=${lib.escapeShellArg "${config.disko.rootMountPoint}${luksPersistentSaltPath}"}
+                ${pkgs.coreutils}/bin/install -d -m 0700 "$(${pkgs.coreutils}/bin/dirname "$target_salt")"
+                if [ -e "$target_salt" ] && ! ${pkgs.diffutils}/bin/cmp -s ${lib.escapeShellArg luksPersistentSaltPath} "$target_salt"; then
+                  echo "Refusing to replace existing rpi-otp-derived-key salt at $target_salt" >&2
+                  exit 1
+                fi
+                ${pkgs.coreutils}/bin/install -m 0400 ${lib.escapeShellArg luksPersistentSaltPath} "$target_salt"
+              '';
+            in
+            {
+              boot.loader.raspberry-pi.bootloader = "kernel";
+              boot.tmp.useTmpfs = true;
+              # Create a secret derived from the "rpi-otp-private-key" that we will use to decrypt the root filesystem.
+              boot.initrd.systemd.enable = true;
+              services.rpiOtpDerivedKey = {
+                enable = true;
+                secrets.${luksSecretName} = {
+                  format = "hex";
+                  path = "/run/secrets/luks.key";
+                  neededForBoot = true;
+                  before = [ "cryptsetup.target" ];
+                };
               };
-            };
-          }
+
+              disko.devices.disk.main.content.partitions.luks.content = {
+                preCreateHook = "${ensureLuksKey}";
+                preMountHook = "${ensureLuksKey}";
+              };
+              disko.devices.lvm_vg.pool.lvs.rootfs.content.postMountHook = copyLuksSaltToTarget;
+            })
         ];
       };
 
