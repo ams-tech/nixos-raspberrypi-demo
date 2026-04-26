@@ -356,6 +356,12 @@
                   before = [ "cryptsetup.target" ];
                 };
               };
+              # The initrd service is sandboxed to /run/secrets, so create it
+              # before systemd applies ReadWritePaths.
+              boot.initrd.systemd.services.rpi-otp-derived-key-luks.serviceConfig = {
+                RuntimeDirectory = "secrets";
+                RuntimeDirectoryMode = "0700";
+              };
 
               disko.devices.disk.nvme0-luks.content.partitions.luks.content = {
                 preCreateHook = "${ensureLuksKey}";
