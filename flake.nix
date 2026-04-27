@@ -340,7 +340,21 @@
               common-user-config
               {
                 boot.loader.raspberry-pi.bootloader = "kernel";
-                boot.initrd.systemd.enable = true;
+                boot.consoleLogLevel = 7;
+                boot.initrd.systemd = {
+                  enable = true;
+                  emergencyAccess = true;
+                  managerEnvironment.SYSTEMD_LOG_LEVEL = "debug";
+                };
+                boot.kernelParams = [
+                  # Put the initrd debug shell on a local VT for HDMI + keyboard access.
+                  "rd.systemd.debug_shell=tty9"
+                  "rd.systemd.log_level=debug"
+                  "rd.systemd.log_target=console"
+                  "systemd.log_level=debug"
+                  "systemd.log_target=console"
+                  "udev.log_level=debug"
+                ];
                 boot.tmp.useTmpfs = true;
               }
             ];
