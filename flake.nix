@@ -346,9 +346,15 @@
                   emergencyAccess = true;
                   managerEnvironment.SYSTEMD_LOG_LEVEL = "debug";
                 };
+                boot.initrd.kernelModules = [
+                  "xhci_pci"
+                  "xhci_hcd"
+                  "usbhid"
+                  "hid_generic"
+                ];
                 boot.kernelParams = [
-                  # Put the initrd debug shell on the active HDMI console.
-                  "rd.systemd.debug_shell=tty1"
+                  # Pause initrd boot and grab the active HDMI console.
+                  "rd.systemd.break=pre-basic,pre-mount"
                   "rd.systemd.log_level=debug"
                   "rd.systemd.log_target=console"
                   "systemd.log_level=debug"

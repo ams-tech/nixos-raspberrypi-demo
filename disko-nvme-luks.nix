@@ -28,6 +28,8 @@ in
   # cryptsetup-pre.target with these locked inputs; keep the upstream unit list
   # de-duplicated so initrd unit generation can link each unit once.
   boot.initrd.systemd.additionalUpstreamUnits = lib.mkForce [
+    "breakpoint-pre-basic.service"
+    "breakpoint-pre-mount.service"
     "cryptsetup-pre.target"
     "tpm2.target"
     "systemd-tpm2-setup-early.service"
