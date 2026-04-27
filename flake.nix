@@ -347,8 +347,8 @@
                   managerEnvironment.SYSTEMD_LOG_LEVEL = "debug";
                 };
                 boot.kernelParams = [
-                  # Put the initrd debug shell on a local VT for HDMI + keyboard access.
-                  "rd.systemd.debug_shell=tty9"
+                  # Put the initrd debug shell on the active HDMI console.
+                  "rd.systemd.debug_shell=tty1"
                   "rd.systemd.log_level=debug"
                   "rd.systemd.log_target=console"
                   "systemd.log_level=debug"
