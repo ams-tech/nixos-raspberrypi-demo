@@ -345,6 +345,28 @@
                   enable = true;
                   emergencyAccess = true;
                   managerEnvironment.SYSTEMD_LOG_LEVEL = "debug";
+                  services =
+                    let
+                      tty1Shell = {
+                        overrideStrategy = "asDropin";
+                        serviceConfig = {
+                          StandardInput = "tty-force";
+                          StandardOutput = "tty";
+                          StandardError = "tty";
+                          TTYPath = "/dev/tty1";
+                          TTYReset = true;
+                          TTYVHangup = true;
+                        };
+                      };
+                    in
+                    {
+                      "breakpoint-pre-basic" = tty1Shell;
+                      "breakpoint-pre-mount" = tty1Shell;
+                      "debug-shell" = tty1Shell;
+                      "emergency" = tty1Shell;
+                      "rescue" = tty1Shell;
+                      "systemd-ask-password-console" = tty1Shell;
+                    };
                 };
                 boot.initrd.kernelModules = [
                   "xhci_pci"
