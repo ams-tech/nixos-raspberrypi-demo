@@ -19,7 +19,7 @@
 
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
     nixos-raspberrypi = {
-      url = "github:nvmd/nixos-raspberrypi/main";
+      url = "github:ams-tech/nixos-raspberrypi/rpi-otp-upstream-cleanup";
     };
 
     disko = {
@@ -313,6 +313,7 @@
               raspberry-pi-5.base
               raspberry-pi-5.page-size-16k
               raspberry-pi-5.display-vc4
+              rpi-otp-derived-key
               ./pi5-configtxt.nix
             ];
           })
@@ -327,6 +328,9 @@
             boot.loader.raspberry-pi.bootloader = "kernel";
             boot.tmp.useTmpfs = true;
           }
+          
+          ({ config, pkgs, lib, nixos-raspberrypi, disko, ... }: {
+          boot.initrd.systemd.enable = true;
           services.rpiOtpDerivedKey = {
             enable = true;
             secrets.luks-key = {
@@ -342,7 +346,7 @@
             settings = {
               KbdInteractiveAuthentication = false;
               PasswordAuthentication = false;
-              PermitRootLogin = "prohibit-password";
+              PermitRootLogin = lib.mkForce "prohibit-password";
             };
           };
 
@@ -360,10 +364,7 @@
           };
 
           security.sudo.wheelNeedsPassword = false;
-          networking = {
-            hostName = "rpi5-luks-demo";
-            useDHCP = lib.mkDefault true;
-          };
+          })
         ];
       };
     };
