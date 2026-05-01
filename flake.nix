@@ -304,7 +304,31 @@
         ];
       };
 
+      rpi5-luks = nixos-raspberrypi.lib.nixosSystemFull {
+        specialArgs = inputs;
+        modules = [
+          ({ config, pkgs, lib, nixos-raspberrypi, disko, ... }: {
+            imports = with nixos-raspberrypi.nixosModules; [
+              # Hardware configuration
+              raspberry-pi-5.base
+              raspberry-pi-5.page-size-16k
+              raspberry-pi-5.display-vc4
+              ./pi5-configtxt.nix
+            ];
+          })
+          # Disk configuration
+          disko.nixosModules.disko
+          # WARNING: formatting disk with disko is DESTRUCTIVE, check if
+          # `disko.devices.disk.nvme0.device` is set correctly!
+          ./disko-nvme-luks.nix
+          # Further user configuration
+          common-user-config
+          {
+            boot.loader.raspberry-pi.bootloader = "kernel";
+            boot.tmp.useTmpfs = true;
+          }
+        ];
+      };
     };
-
   };
 }
