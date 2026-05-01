@@ -209,7 +209,7 @@
       },
       "original": {
         "owner": "ams-tech",
-        "ref": "rpi-otp-upstream-cleanup",
+        "ref": "topic/rpi-otp-private-key",
         "repo": "nixos-raspberrypi",
         "type": "github"
       }

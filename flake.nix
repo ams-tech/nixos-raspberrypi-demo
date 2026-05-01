@@ -19,7 +19,7 @@
 
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
     nixos-raspberrypi = {
-      url = "github:ams-tech/nixos-raspberrypi/rpi-otp-upstream-cleanup";
+      url = "github:ams-tech/nixos-raspberrypi/topic/rpi-otp-private-key";
     };
 
     disko = {
@@ -327,10 +327,11 @@
           {
             boot.loader.raspberry-pi.bootloader = "kernel";
             boot.tmp.useTmpfs = true;
+            boot.initrd.systemd.enable = true;
           }
           
           ({ config, pkgs, lib, nixos-raspberrypi, disko, ... }: {
-          boot.initrd.systemd.enable = true;
+          
           services.rpiOtpDerivedKey = {
             enable = true;
             secrets.luks-key = {
