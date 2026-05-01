@@ -327,6 +327,43 @@
             boot.loader.raspberry-pi.bootloader = "kernel";
             boot.tmp.useTmpfs = true;
           }
+          services.rpiOtpDerivedKey = {
+            enable = true;
+            secrets.luks-key = {
+              format = "hex";
+              path = "/run/secrets/luks.key";
+              neededForBoot = true;
+              before = [ "cryptsetup-pre.target" ];
+            };
+          };
+
+          services.openssh = {
+            enable = true;
+            settings = {
+              KbdInteractiveAuthentication = false;
+              PasswordAuthentication = false;
+              PermitRootLogin = "prohibit-password";
+            };
+          };
+
+          users.users = {
+            adam = {
+              isNormalUser = true;
+              description = "Test account for Adam Schafer";
+              extraGroups = [ "wheel" ];
+              openssh.authorizedKeys.keys = [
+                "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIJMjtOqSWLDq79t/9XljmBrfBVm8deQJdOQmTV7c45Ni adam@malak"
+                "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIIojZ/xu4CVq5TbY51CMUlRiWnSdkS7ZN9xL10gNrFux black@plagueis"
+                "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIIDVEuyPwmcEybp5d1/FEbCPOjCfuRZ2vp7tYGqe64mg adamschafer@starkiller"
+              ];
+            };
+          };
+
+          security.sudo.wheelNeedsPassword = false;
+          networking = {
+            hostName = "rpi5-luks-demo";
+            useDHCP = lib.mkDefault true;
+          };
         ];
       };
     };
