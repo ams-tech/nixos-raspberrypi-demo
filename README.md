@@ -16,18 +16,19 @@ then installs this repo's `rpi5-luks` configuration to `/dev/nvme0n1`.
 ### Build the RPi 5 installer image
 
 Build on an `aarch64-linux` machine, or on a host configured with an AArch64
-remote builder or emulation:
+remote builder or emulation, using the same `nixos-raspberrypi` ref as
+`flake.nix`:
 
 ```shell
-NIXOS_RPI_FLAKE=github:ams-tech/nixos-raspberrypi/rpi-otp-pkgs
+NIXOS_RPI_FLAKE=github:ams-tech/nixos-raspberrypi/topic/rpi-otp-private-key
 nix build "$NIXOS_RPI_FLAKE#installerImages.rpi5"
-ls result/sd-image/
+readlink -f result
 ```
 
-The image is:
+The `result` symlink points directly to the compressed installer image:
 
 ```text
-result/sd-image/nixos-installer-rpi5-kernel.img.zst
+.../nixos-installer-rpi5-kernel.img.zst
 ```
 
 ### Burn the installer image to an SD card
@@ -42,8 +43,7 @@ Replace `/dev/sdX` with the whole SD card device, not a partition such as
 `/dev/sdX1`:
 
 ```shell
-zstdcat result/sd-image/nixos-installer-rpi5-kernel.img.zst \
-  | sudo dd of=/dev/sdX bs=4M status=progress conv=fsync
+zstdcat result | sudo dd of=/dev/sdX bs=4M status=progress conv=fsync
 sync
 ```
 
@@ -69,7 +69,7 @@ Temporary key material is written under `/run` so it disappears on reboot.
 First check whether the OTP private key is already programmed:
 
 ```shell
-NIXOS_RPI_FLAKE=github:ams-tech/nixos-raspberrypi/rpi-otp-pkgs
+NIXOS_RPI_FLAKE=github:ams-tech/nixos-raspberrypi/topic/rpi-otp-private-key
 sudo nix run "$NIXOS_RPI_FLAKE#rpi-otp-private-key" -- -c
 ```
 
