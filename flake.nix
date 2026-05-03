@@ -329,42 +329,6 @@
             boot.tmp.useTmpfs = true;
             boot.initrd.systemd.enable = true;
           }
-          
-          ({ config, pkgs, lib, nixos-raspberrypi, disko, ... }: {
-          
-          services.rpiOtpDerivedKey = {
-            enable = true;
-            secrets.luks-key = {
-              format = "hex";
-              path = "/run/secrets/luks.key";
-              neededForBoot = true;
-              before = [ "cryptsetup-pre.target" ];
-            };
-          };
-
-          services.openssh = {
-            enable = true;
-            settings = {
-              KbdInteractiveAuthentication = false;
-              PasswordAuthentication = false;
-              PermitRootLogin = lib.mkForce "prohibit-password";
-            };
-          };
-
-          users.users = {
-            adam = {
-              isNormalUser = true;
-              description = "Test account for Adam Schafer";
-              extraGroups = [ "wheel" ];
-              openssh.authorizedKeys.keys = [
-                "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIJMjtOqSWLDq79t/9XljmBrfBVm8deQJdOQmTV7c45Ni adam@malak"
-                "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIIojZ/xu4CVq5TbY51CMUlRiWnSdkS7ZN9xL10gNrFux black@plagueis"
-                "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIIDVEuyPwmcEybp5d1/FEbCPOjCfuRZ2vp7tYGqe64mg adamschafer@starkiller"
-              ];
-            };
-          };
-
-          security.sudo.wheelNeedsPassword = false;
           })
         ];
       };
