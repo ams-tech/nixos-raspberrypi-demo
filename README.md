@@ -3,7 +3,7 @@
 Demo configurations for the
 [nixos-raspberrypi](https://github.com/ams-tech/nixos-raspberrypi) Flake.
 
-## Quick Start: Raspberry Pi 5 LUKS on NVMe
+## Quick Start: Raspberry Pi 5 Encrypted RootFS
 
 This flow uses the Raspberry Pi 5 installer image from `nixos-raspberrypi`,
 then installs this repo's `rpi5-luks` configuration to `/dev/nvme0n1`.
