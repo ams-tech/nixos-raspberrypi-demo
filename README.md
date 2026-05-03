@@ -31,6 +31,10 @@ The `result` symlink points directly to the compressed installer image:
 .../nixos-installer-rpi5-kernel.img.zst
 ```
 
+Installer images for Raspberry Pi Zero 2, 4, and 5 include
+`rpi-otp-private-key`, so the OTP provisioning commands below use the tool
+directly from the booted installer system.
+
 ### Burn the installer image to an SD card
 
 Find the SD card device:
@@ -70,8 +74,7 @@ verifying the OTP key.
 First check whether the OTP private key is already programmed:
 
 ```shell
-NIXOS_RPI_FLAKE=github:ams-tech/nixos-raspberrypi/topic/rpi-otp-private-key
-sudo nix run "$NIXOS_RPI_FLAKE#rpi-otp-private-key" -- -c
+sudo rpi-otp-private-key -c
 ```
 
 If that succeeds, skip to the install step. If it fails, generate a key and
@@ -87,8 +90,8 @@ openssl ec -in "$OTP_KEYDIR/private_key.pem" -text -noout \
   | tr -d ' \n:' \
   | head -n1 > "$OTP_KEYDIR/d.hex"
 
-sudo nix run "$NIXOS_RPI_FLAKE#rpi-otp-private-key" -- -w "$(cat "$OTP_KEYDIR/d.hex")"
-sudo nix run "$NIXOS_RPI_FLAKE#rpi-otp-private-key" -- -c
+sudo rpi-otp-private-key -w "$(cat "$OTP_KEYDIR/d.hex")"
+sudo rpi-otp-private-key -c
 
 rm -f "$OTP_KEYDIR/private_key.pem" "$OTP_KEYDIR/d.hex"
 rmdir "$OTP_KEYDIR"
