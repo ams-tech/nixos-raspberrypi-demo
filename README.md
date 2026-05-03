@@ -8,6 +8,8 @@ Demo configurations for the
 This flow uses the Raspberry Pi 5 installer image from `nixos-raspberrypi`,
 then installs this repo's `rpi5-luks` configuration to `/dev/nvme0n1`.
 
+As of writing, the rpi5 is the only variant that includes hardware-accelerated cryptography.  As such, this is the only hardware that can run full disk encryption without a lot of CPU overhead.
+
 > [!WARNING]
 > The install step destroys `/dev/nvme0n1`. The OTP private key step writes
 > one-time-programmable Raspberry Pi fuses; run it only when you are sure you
@@ -25,15 +27,7 @@ nix build "$NIXOS_RPI_FLAKE#installerImages.rpi5"
 readlink -f result
 ```
 
-The `result` symlink points directly to the compressed installer image:
-
-```text
-.../nixos-installer-rpi5-kernel.img.zst
-```
-
-Installer images for Raspberry Pi Zero 2, 4, and 5 include
-`rpi-otp-private-key`, so the OTP provisioning commands below use the tool
-directly from the booted installer system.
+This will build the image to `.../result/sd-image/nixos-installer-rpi5-kernel.img.zst`
 
 ### Burn the installer image to an SD card
 
@@ -47,9 +41,11 @@ Replace `/dev/sdX` with the whole SD card device, not a partition such as
 `/dev/sdX1`:
 
 ```shell
-zstdcat result | sudo dd of=/dev/sdX bs=4M status=progress conv=fsync
+zstdcat result/sd-image/nixos-installer-rpi5-kernel.img.zst | sudo dd of=/dev/sdX bs=4M status=progress conv=fsync
 sync
 ```
+
+This could also be a `/dev/mmcblkX` device (for example, if you're using an RPi's SD card slot)
 
 ### Boot the installer SD card
 
@@ -62,8 +58,6 @@ ssh root@nixos-installer.local
 ```
 
 Use the credentials printed on the installer console if SSH asks for a password.
-If you are not using Ethernet, configure Wi-Fi from the console with `iwctl`
-first.
 
 ### Provision the Raspberry Pi OTP private key
 
@@ -77,15 +71,15 @@ First check whether the OTP private key is already programmed:
 sudo rpi-otp-private-key -c
 ```
 
-If that succeeds, skip to the install step. If it fails, generate a key and
-program it into OTP:
+If that succeeds, skip to the install step. If it fails, generate a key with
+OpenSSL and program it into OTP:
 
 ```shell
 OTP_KEYDIR="$(mktemp -d /run/rpi-otp-private-key.XXXXXX)"
 chmod 0700 "$OTP_KEYDIR"
 
-openssl ecparam -name prime256v1 -genkey -noout -out "$OTP_KEYDIR/private_key.pem"
-openssl ec -in "$OTP_KEYDIR/private_key.pem" -text -noout \
+nix run nixpkgs#openssl -- ecparam -name prime256v1 -genkey -noout -out "$OTP_KEYDIR/private_key.pem"
+nix run nixpkgs#openssl -- ec -in "$OTP_KEYDIR/private_key.pem" -text -noout \
   | awk '/priv:/{flag=1; next} /pub:/{flag=0} flag' \
   | tr -d ' \n:' \
   | head -n1 > "$OTP_KEYDIR/d.hex"
@@ -103,20 +97,10 @@ that is installed at `/var/lib/rpi-otp-derived-key/salt/luks-key`.
 
 ### Install `rpi5-luks` to `nvme0n1`
 
-Still on the installer system, verify that the NVMe disk is the intended target:
 
 ```shell
-lsblk -p
+nix develop --command nixos-anywhere --flake .#rpi5-luks root@nixos-installer.local
 ```
 
-Then install this repo's `rpi5-luks` configuration:
-
-```shell
-git clone https://github.com/ams-tech/nixos-raspberrypi-demo.git
-cd nixos-raspberrypi-demo
-sudo disko-install --flake .#rpi5-luks --disk nvme0-luks /dev/nvme0n1
-sudo poweroff
-```
-
-Remove the SD card, then power the Raspberry Pi back on to boot from the NVMe
+Power off the Raspberrry Pi, remove the SD card, then power the Raspberry Pi back on to boot from the NVMe
 installation.

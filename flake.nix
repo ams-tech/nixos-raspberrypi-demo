@@ -328,6 +328,15 @@
             boot.loader.raspberry-pi.bootloader = "kernel";
             boot.tmp.useTmpfs = true;
             boot.initrd.systemd.enable = true;
+            services.rpiOtpDerivedKey = {
+              enable = true;
+              secrets.luks-key = {
+                format = "hex";
+                path = "/run/secrets/luks.key";
+                neededForBoot = true;
+                before = [ "cryptsetup-pre.target" ];
+              };
+            };
           }
         ];
       };
