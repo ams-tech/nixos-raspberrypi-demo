@@ -329,7 +329,6 @@
             boot.tmp.useTmpfs = true;
             boot.initrd.systemd.enable = true;
           }
-          })
         ];
       };
     };
