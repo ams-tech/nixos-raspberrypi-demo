@@ -64,7 +64,8 @@ first.
 ### Provision the Raspberry Pi OTP private key
 
 Run these commands on the Raspberry Pi booted from the installer SD card.
-Temporary key material is written under `/run` so it disappears on reboot.
+Temporary key material is written under `/run`; delete it after programming and
+verifying the OTP key.
 
 First check whether the OTP private key is already programmed:
 
@@ -88,12 +89,14 @@ openssl ec -in "$OTP_KEYDIR/private_key.pem" -text -noout \
 
 sudo nix run "$NIXOS_RPI_FLAKE#rpi-otp-private-key" -- -w "$(cat "$OTP_KEYDIR/d.hex")"
 sudo nix run "$NIXOS_RPI_FLAKE#rpi-otp-private-key" -- -c
+
+rm -f "$OTP_KEYDIR/private_key.pem" "$OTP_KEYDIR/d.hex"
+rmdir "$OTP_KEYDIR"
+unset OTP_KEYDIR
 ```
 
-Keep the contents of `$OTP_KEYDIR` secret until the next reboot or until you
-remove the directory. The LUKS install derives the disk key from the programmed
-OTP key and a salt that is installed at
-`/var/lib/rpi-otp-derived-key/salt/luks-key`.
+The LUKS install derives the disk key from the programmed OTP key and a salt
+that is installed at `/var/lib/rpi-otp-derived-key/salt/luks-key`.
 
 ### Install `rpi5-luks` to `nvme0n1`
 
